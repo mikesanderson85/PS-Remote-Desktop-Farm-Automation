@@ -1,5 +1,6 @@
 displayName,collectionName,cmdLine,folderName,iconPath,filePath,installHost,sourceName,installCommand,powerShellCommand,UserGroups
-Google Chrome,OVSColl01,,,,C:\Program Files (x86)\Google\Chrome\Application\chrome.exe,MS2012002 MS2012003,googlechromestandaloneenterprise64.msi,/qn,,RDS-GoogleChrome
-PuTTY,OVSColl01,,,,C:\Sources\Program Files\putty.exe,MS2012002 MS2012003,putty.exe,,,RDS-Putty
+Google Chrome,OVSColl01,,,,C:\Program Files (x86)\Google\Chrome\Application\chrome.exe,magicmike02 magicmike03,googlechromestandaloneenterprise64.msi,/qn,,RDS-GoogleChrome
+PuTTY,OVSColl01,,,,D:\Sources\Program Files\putty.exe,magicmike02 magicmike03,putty.exe,,,RDS-Putty
 Internet Explorer,OVSColl01,,,,C:\Program Files\Internet Explorer\iexplore.exe,,,,,RDS-InternetExplorer
 Remote Desktop,OVSColl01,,,,C:\Windows\system32\mstsc.exe,,,,,RDS-MSTSC
+AD UC,OVSColl01,,,,C:\Windows\System32\dsa.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-AD-Tools,

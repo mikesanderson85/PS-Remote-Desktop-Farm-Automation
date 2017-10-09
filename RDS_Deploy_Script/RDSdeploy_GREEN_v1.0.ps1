@@ -14,16 +14,16 @@ Param(
     [switch]$installApps,
     [switch]$validateDeployment,
     #[Parameter(Mandatory=$True)]
-    $FQDN = "magicmike.local",
+    $FQDN = "magicmike.com",
     #[Parameter(Mandatory=$True)]
-    $sessionHost = @("MS2012002", "MS2012003"),
+    $sessionHost = @("magicmike02", "magicmike03"),
     #[Parameter(Mandatory=$True)]
-    [string]$webAccessServerName = "MS2012004",
+    [string]$webAccessServerName = "magicmike04",
     #[Parameter(Mandatory=$True)]
-    [string]$brokerServerName = "MS2012001",
-    [string]$licenseServerName = "MS2012005",
-    [string]$gatewayServerName = "MS2012006",
-    [string]$gatewayExternalFQDN = "MS2012006.magicmike.local",
+    [string]$brokerServerName = "magicmike01",
+    [string]$licenseServerName = "magicmike05",
+    [string]$gatewayServerName = "magicmike06",
+    [string]$gatewayExternalFQDN = "magicmike06.magicmike.com",
     [string]$csvName = "apps.csv",
     [string]$installDisk = "D",
     [string]$certNameBroker,
@@ -63,8 +63,8 @@ If (Test-Path "$scriptDir\$csvName") {
     }
     }
 
-$displayName = $displayName | select -Unique
-$collectionName = $collectionName | Select -Unique
+$displayName = $displayName | Select -Unique
+$collectionName = $collectionName | ? {$_} | Select -Unique
 
 Write-Log "S T A R T  V A L I D A T I O N" -writeHostInfo
 $errorFound = 0
@@ -140,6 +140,9 @@ $errorFound = 0
                 if (Get-RDRemoteApp -collectionName $collName -connectionBroker $brokerServerName -displayName $app) {
                     Write-Log "The RemoteApp, '$app', is published" -writeHostInfo
                     } 
+                    else {
+                    Write-Log "The RemoteApp, '$app', could not be found in collection '$collName'. It may be the app is not required for this collection. Check apps.csv for details" -infoType "ERROR" -writeHostError
+                    }
         }
     } else {
         Write-Log "Apps will not be checked as the collection, '$collName', does not exist" -infoType "ERROR" -writeHostError
