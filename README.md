@@ -1,2 +1,2 @@
 # Remote-Desktop-Farm-Automation
-Script for deploying an RDS Farm. Including desired application installs
+Script for deploying an RDS Farm. Including desired application installs on sessions hosts
