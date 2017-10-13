@@ -1,6 +1,12 @@
-displayName,collectionName,cmdLine,folderName,iconPath,filePath,installHost,sourceName,installCommand,powerShellCommand,UserGroups
-Google Chrome,OVSColl01,,,,C:\Program Files (x86)\Google\Chrome\Application\chrome.exe,magicmike02 magicmike03,googlechromestandaloneenterprise64.msi,/qn,,RDS-GoogleChrome
-PuTTY,OVSColl01,,,,D:\Sources\Program Files\putty.exe,magicmike02 magicmike03,putty.exe,,,RDS-Putty
-Internet Explorer,OVSColl01,,,,C:\Program Files\Internet Explorer\iexplore.exe,,,,,RDS-InternetExplorer
-Remote Desktop,OVSColl01,,,,C:\Windows\system32\mstsc.exe,,,,,RDS-MSTSC
-AD UC,OVSColl01,,,,C:\Windows\System32\dsa.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-AD-Tools,
+displayName,collectionName,cmdLine,folderName,iconPath,iconIndex,filePath,installHost,sourceName,installCommand,powerShellCommand,UserGroups
+Google Chrome,OVSColl01,,,,,C:\Program Files (x86)\Google\Chrome\Application\chrome.exe,magicmike02 magicmike03,googlechromestandaloneenterprise64.msi,/qn,,RDS-GoogleChrome
+PuTTY,OVSColl01,,,,,D:\Sources\Program Files\putty.exe,magicmike02 magicmike03,putty.exe,,,RDS-Putty
+Internet Explorer,OVSColl01,,,,,C:\Program Files\Internet Explorer\iexplore.exe,,,,,RDS-InternetExplorer
+Remote Desktop,OVSColl01,,,,,C:\Windows\system32\mstsc.exe,,,,,RDS-MSTSC
+AD UC,OVSColl01,,,%systemroot%\system32\dsadmin.dll,0,C:\Windows\System32\dsa.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-AD-Tools,
+DHCP,OVSColl01,,,%windir%\system32\dhcpsnap.dll,0,C:\Windows\System32\dhcpmgmt.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-DHCP,
+File Server Resource Manager,OVSColl01,,,%systemroot%\system32\srm.dll,0,C:\Windows\System32\fsrm.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-FSRM-Mgmt -IncludeManagementTools,
+IIS,OVSColl01,,,,,C:\Windows\system32\inetsrv\InetMgr.exe,magicmike02 magicmike03,,,Install-WindowsFeature Web-Mgmt-Console,
+DNS,OVSColl01,,,%systemroot%\system32\dnsmgr.dll,0,C:\Windows\System32\dnsmgmt.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-DNS-Server,
+Failover Cluster Admin,OVSColl01,,,%systemroot%\cluster\failoverclusters.snapinsupport.dll,2,C:\Windows\System32\CluAdmin.msc,magicmike02 magicmike03,,,Install-WindowsFeature RSAT-Clustering-Mgmt,
+PowerShell,OVSColl01,,,,,C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe,magicmike02 magicmike03,,,,
