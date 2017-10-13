@@ -11,7 +11,8 @@ Script should be ran external to the computers the farm is being deployed on but
 	Switch to determine if applications should be installed (requires the apps.csv file to be populated)
 
 .PARAMETER InstallCerts
-	Swtich to determine if certificates should be installed. Certificates should be named as per their corresponding servers (e.g. broker01.domain.local.pfx) and placed in the Certificates folder
+	Swtich to determine if certificates should be installed. Certificates should be named as per their corresponding servers `
+	(e.g. broker01.domain.local.pfx) and placed in the Certificates folder
 
 .PARAMETER FQDN
 	The fully qualified domain name of the deployment
@@ -308,7 +309,7 @@ Write-Log "Starting deployment using broker $brokerServerName" -writeHostInfo
 
 #START RDS FARM DEPLOYMENT
 try {
-	New-RDSessionDeployment –ConnectionBroker $brokerServerName –WebAccessServer $webAccessServerName –SessionHost $sessionHostFQDN[0]
+	New-RDSessionDeployment -ConnectionBroker $brokerServerName -WebAccessServer $webAccessServerName -SessionHost $sessionHostFQDN[0]
 } catch {
 	Write-Log $Error[0] -writeHostError
 	exit
