@@ -45,12 +45,10 @@ Script should be ran external to the computers the farm is being deployed on but
 		./REDdeploy_GREEN_v1.0.ps1 -installApps -FQDN domain.local -sessionHost host011, host012 -webAccessServerName webaccess01 -brokerServerName broker01 -licenseServerName license01 -gatewayServerName gateway01 -gatewayExternalFQDN gateway01.domain.local -csvName apps.csv -installDisk D 
 		
 		Deploy a RDS farm, install applications but no certificates
-
 .EXAMPLE
 		./REDdeploy_GREEN_v1.0.ps1 -FQDN domain.local -sessionHost host011, host012 -webAccessServerName webaccess01 -brokerServerName broker01 -licenseServerName license01 -gatewayServerName gateway01 -gatewayExternalFQDN gateway01.domain.local
 
 		Deploy a RDS farm only and no applications
-
 .EXAMPLE		
 		./REDdeploy_GREEN_v1.0.ps1 -installApps -installCerts -FQDN domain.local -sessionHost host011, host012 -webAccessServerName webaccess01 -brokerServerName broker01 -licenseServerName license01 -gatewayServerName gateway01 -gatewayExternalFQDN gateway01.domain.local -csvName apps.csv -installDisk D 
 	
@@ -59,12 +57,13 @@ Script should be ran external to the computers the farm is being deployed on but
 .NOTES
 Author: Michael Sanderson
 Date: 11OCT2017
-Updated: 11OCT2017
+Updated: 16OCT2017
 UpdNote: Added help
+UpNote: Added validation to ensure host values in CSV match those given as parameters before continuing script
 #>
 
 [CmdletBinding()]
-Param
+param
 (
 	[switch]$installCerts,
 	[switch]$installApps,
@@ -81,8 +80,7 @@ Param
 
 #Write log function
 function Write-Log {
-	Param
-	(
+	Param (
 		[string]$logString,
 		[String]$infoType = "INFO",
 		[Switch]$writeHostInfo,
@@ -103,6 +101,59 @@ function Write-Log {
 		Write-Host $logString -ForegroundColor Yellow -BackgroundColor Black
 	}
 	
+}
+
+function Show-Prompt($title, $message, $resultYes, $resultNo) {
+	
+	$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", $resultYes
+	
+	$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", $resultNo
+	
+	$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+	
+	$result = $host.ui.PromptForChoice($title, $message, $options, 1)
+	
+	switch ($result) {
+		0 {}
+		1 {exit}
+	}
+}
+
+function Check-Deployment {
+if ($installApps) {
+    #IF CSV FILE CAN BE FOUND
+    If (Test-Path "$scriptDir\$csvName") {
+	    $CSVImport = Import-CSV "$scriptDir\$csvName"
+	
+        #NULL VALUES
+	    $incorrectHosts = $null
+	    $compareCSVHosts = $null	
+
+	    forEach ($line in $CSVImport) {
+		    if ($line.installHost) {
+			    $installHost = $line.installHost.Split(" ")
+			    $compareCSVHosts = Compare-Object $sessionHost $installHost
+			    if ($compareCSVHosts.sideIndicator -eq "=>") {
+				    $incorrectHosts += @($($line.displayName))
+			    }
+		    }
+	    }
+	
+	    if ($incorrectHosts) {
+		    $incorrectHosts = $incorrectHosts -join "`n"
+		    $errorMessage = @" 
+    Mistmatch between hosts in '$($csvName)' for application(s):-
+    $incorrectHosts
+
+    Applications cannot be installed on incorrectly named hosts. Continue?
+
+"@ 
+		    Show-Prompt "Mistmatch found" $errorMessage "Continue the deployment" "Exit deployment"
+	    }
+    } else {
+        Show-Prompt "CSV not found" "The CSV file, '$($csvName)', could not be found but 'installApp' switch specified. Do you wish to continue?" "Continue deployment (No apps will be installed)" "Exit deployment"
+    }
+}
 }
 
 #VALIDATE THE DEPLOYMENT
@@ -242,6 +293,8 @@ $logFile = "$PSScriptRoot\RDdeploy_GREEN.log"
 #Catch all errors
 $ErrorActionPreference = "Stop" #terminate on all errors
 
+Check-Deployment
+
 #BEGIN LOG
 Write-Log "====== STARTING SCRIPT 'RDSdeploy.ps1' ======" -writeHostInfo
 
@@ -309,7 +362,7 @@ Write-Log "Starting deployment using broker $brokerServerName" -writeHostInfo
 
 #START RDS FARM DEPLOYMENT
 try {
-	New-RDSessionDeployment -ConnectionBroker $brokerServerName -WebAccessServer $webAccessServerName -SessionHost $sessionHostFQDN[0]
+	New-RDSessionDeployment –ConnectionBroker $brokerServerName –WebAccessServer $webAccessServerName –SessionHost $sessionHostFQDN[0]
 } catch {
 	Write-Log $Error[0] -writeHostError
 	exit
