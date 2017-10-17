@@ -11,14 +11,13 @@ Script should be ran external to the computers the farm is being deployed on but
 	Switch to determine if applications should be installed (requires the apps.csv file to be populated)
 
 .PARAMETER InstallCerts
-	Swtich to determine if certificates should be installed. Certificates should be named as per their corresponding servers `
-	(e.g. broker01.domain.local.pfx) and placed in the Certificates folder
+	Swtich to determine if certificates should be installed. Certificates should be named as per their corresponding servers. (E.g. broker01.domain.local.pfx) and placed in the Certificates folder
 
 .PARAMETER FQDN
 	The fully qualified domain name of the deployment
 
 .PARAMETER sessionHost
-	The hostname of the servers that are to be session hosts within the deployment. Multipe hosts should be seperated by a comma (,)
+	The hostname of the servers that are to be session hosts within the deployment. Multipe hosts should be seperated by a comma (,).
 
 .PARAMETER webAccessServerName
 	The hostname of the Web Access server
@@ -57,9 +56,10 @@ Script should be ran external to the computers the farm is being deployed on but
 .NOTES
 Author: Michael Sanderson
 Date: 11OCT2017
-Updated: 16OCT2017
+Updated: 17OCT2017
 UpdNote: Added help
-UpNote: Added validation to ensure host values in CSV match those given as parameters before continuing script
+UpdNote: Added validation to ensure host values in CSV match those given as parameters before continuing script
+UpdNote: Added check that certifcates exist for deployment
 #>
 
 [CmdletBinding()]
@@ -90,7 +90,7 @@ function Write-Log {
 	)
 	
 	$logDateTime = Get-Date -Format f
-	Add-Content $logFile -Value (($logDateTime + ": " + $infoType + " ") + ($logString))
+	Add-Content $logFile -Value (($logDateTime + ": " + $infoType + ": ") + ($logString))
 	if ($writeHostInfo) {
 		Write-Host $logString -ForegroundColor Green -BackgroundColor Black
 	} ElseIf ($writeHostError) {
@@ -114,46 +114,67 @@ function Show-Prompt($title, $message, $resultYes, $resultNo) {
 	$result = $host.ui.PromptForChoice($title, $message, $options, 1)
 	
 	switch ($result) {
-		0 {}
-		1 {exit}
+		0 {Write-Log "Yes has been selected"
+		}
+		1 {
+			exit
+		}
 	}
 }
 
 function Check-Deployment {
-if ($installApps) {
-    #IF CSV FILE CAN BE FOUND
-    If (Test-Path "$scriptDir\$csvName") {
-	    $CSVImport = Import-CSV "$scriptDir\$csvName"
-	
-        #NULL VALUES
-	    $incorrectHosts = $null
-	    $compareCSVHosts = $null	
-
-	    forEach ($line in $CSVImport) {
-		    if ($line.installHost) {
-			    $installHost = $line.installHost.Split(" ")
-			    $compareCSVHosts = Compare-Object $sessionHost $installHost
-			    if ($compareCSVHosts.sideIndicator -eq "=>") {
-				    $incorrectHosts += @($($line.displayName))
-			    }
-		    }
-	    }
-	
-	    if ($incorrectHosts) {
-		    $incorrectHosts = $incorrectHosts -join "`n"
-		    $errorMessage = @" 
+	if ($installApps) {
+		#IF CSV FILE CAN BE FOUND
+		If (Test-Path "$scriptDir\$csvName") {
+			$CSVImport = Import-CSV "$scriptDir\$csvName"
+			
+			#NULL VALUES
+			$incorrectHosts = $null
+			$compareCSVHosts = $null
+			
+			forEach ($line in $CSVImport) {
+				if ($line.installHost) {
+					$installHost = $line.installHost.Split(" ")
+					$compareCSVHosts = Compare-Object $sessionHost $installHost
+					if ($compareCSVHosts.sideIndicator -eq "=>") {
+						$incorrectHosts += @($($line.displayName))
+					}
+				}
+			}
+			
+			if ($incorrectHosts) {
+				$incorrectHosts = $incorrectHosts -join "`n"
+				$errorMessage = @" 
     Mistmatch between hosts in '$($csvName)' for application(s):-
     $incorrectHosts
 
     Applications cannot be installed on incorrectly named hosts. Continue?
 
-"@ 
-		    Show-Prompt "Mistmatch found" $errorMessage "Continue the deployment" "Exit deployment"
-	    }
-    } else {
-        Show-Prompt "CSV not found" "The CSV file, '$($csvName)', could not be found but 'installApp' switch specified. Do you wish to continue?" "Continue deployment (No apps will be installed)" "Exit deployment"
-    }
-}
+"@
+				Show-Prompt "Mistmatch found" $errorMessage "Continue the deployment" "Exit deployment"
+			}
+		} else {
+			Show-Prompt "CSV not found" "The CSV file, '$($csvName)', could not be found but 'installApp' switch specified. Do you wish to continue?" "Continue deployment (No apps will be installed)" "Exit deployment"
+		}
+	}
+	
+	if ($installCerts) {
+		$certsFolderPath = "$scriptDir\Certificates"
+		
+		if (Test-Path $certsFolderPath) {
+			$serversThatNeedCertsArray = @($webAccessServerName, $brokerServerName, $gatewayServerName)
+			forEach ($server in $serversThatNeedCertsArray) {
+				if (!(Test-Path "$certsFolderPath\$server.pfx")) {
+					Show-Prompt "Certificate not found" "The certificate for server, '$server', could not be found. Ensure it is spelt correctly and of the format 'servername.fqdn.pfx' (e.g. server01.domain.local.pfx). Do you wish to continue? Certificates will not be installed!" "Continue deployment (Certificates will not be installed)" "Exit deployment"
+				}
+			}
+			
+		} else {
+			Show-Prompt "Folder not found" "The folder 'Certificates' could not be found. Do you wish to continue? Certificates will not be installed!" "Continue deployment (Certificates will not be installed)" "Exit deployment"
+		}
+		
+		
+	}
 }
 
 #VALIDATE THE DEPLOYMENT
@@ -293,6 +314,7 @@ $logFile = "$PSScriptRoot\RDdeploy_GREEN.log"
 #Catch all errors
 $ErrorActionPreference = "Stop" #terminate on all errors
 
+#CHECK THE DEPLOYMENT TO ENSURE VALUES MATCH ETC.
 Check-Deployment
 
 #BEGIN LOG
@@ -321,6 +343,7 @@ $allServersArray = @($webAccessServerName, $brokerServerName, $licenseServerName
 forEach ($hostFQDN in $sessionHostFQDN) {
 	$allServersArray += $hostFQDN
 }
+
 #REMOVE BLANK ENTIRES
 $allServersArray = $allServersArray | ? {
 	$_
@@ -333,7 +356,7 @@ $allServersArray = $allServersArray | ? {
 #TEST CONNECTIONS TO EACH SERVER
 ForEach ($computer in $allServersArray) {
 	if (!(Test-Connection $computer -Count 1 -ErrorAction SilentlyContinue)) {
-		Write-Log "A connection to $computer could not be established. Script will exit. Error: $($Error[0])" -writeHostError
+		Write-Log "A connection to $computer could not be established. Script will exit. Error: $($Error[0])" -writeHostError -infoType "ERROR"
 		Start-Sleep -Seconds 5
 		Exit
 	}
@@ -358,13 +381,12 @@ ForEach ($server in $allServersArray) {
 	}
 }
 
-Write-Log "Starting deployment using broker $brokerServerName" -writeHostInfo
-
 #START RDS FARM DEPLOYMENT
+Write-Log "Starting deployment using broker $brokerServerName" -writeHostInfo
 try {
 	New-RDSessionDeployment –ConnectionBroker $brokerServerName –WebAccessServer $webAccessServerName –SessionHost $sessionHostFQDN[0]
 } catch {
-	Write-Log $Error[0] -writeHostError
+	Write-Log $Error[0] -writeHostError -infoType "ERROR"
 	exit
 }
 
